@@ -1,0 +1,3 @@
+C:/Users/Yihe Huang/TJU/traditional_gomoku/build/CMakeFiles/gomoku.dir
+C:/Users/Yihe Huang/TJU/traditional_gomoku/build/CMakeFiles/edit_cache.dir
+C:/Users/Yihe Huang/TJU/traditional_gomoku/build/CMakeFiles/rebuild_cache.dir
