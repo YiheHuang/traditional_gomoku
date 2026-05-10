@@ -10,7 +10,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(MSVC)
     add_compile_options(/O2 /W3)
 else()
-    add_compile_options(-O3 -march=native -Wall -Wextra)
+    add_compile_options(-O3 -Wall -Wextra)
+    # static link MinGW runtimes so the exe is fully self-contained
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
 endif()
 
 add_executable(gomoku WIN32
@@ -23,6 +25,7 @@ add_executable(gomoku WIN32
     src/search.cpp
     src/game.cpp
     src/ui_win.cpp
+    src/resource.rc
     src/main.cpp
 )
 

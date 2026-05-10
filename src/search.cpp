@@ -229,30 +229,6 @@ SearchResult SearchEngine::search(const Board& board) {
 
     Board b = board; // mutable copy
 
-    // --- VCT/VCF first: if a forced win exists, play it immediately ---
-    if (config.useVCT) {
-        Move vcf = threat.searchVCF(b, config.vctDepth);
-        if (vcf.valid()) {
-            result.bestMove = vcf;
-            result.score = 20000000;
-            result.depth = 0;
-            auto end = std::chrono::steady_clock::now();
-            result.timeMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - startTime).count();
-            result.nodes = totalNodes;
-            return result;
-        }
-        Move vct = threat.searchVCT(b, config.vctDepth);
-        if (vct.valid()) {
-            result.bestMove = vct;
-            result.score = 15000000;
-            result.depth = 0;
-            auto end = std::chrono::steady_clock::now();
-            result.timeMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - startTime).count();
-            result.nodes = totalNodes;
-            return result;
-        }
-    }
-
     // --- Iterative deepening ---
     Move bestMoveSoFar;
     int bestScoreSoFar = 0;

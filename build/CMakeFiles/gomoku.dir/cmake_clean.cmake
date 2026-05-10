@@ -11,6 +11,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/gomoku.dir/src/movegen.cpp.obj.d"
   "CMakeFiles/gomoku.dir/src/pattern.cpp.obj"
   "CMakeFiles/gomoku.dir/src/pattern.cpp.obj.d"
+  "CMakeFiles/gomoku.dir/src/resource.rc.obj"
   "CMakeFiles/gomoku.dir/src/search.cpp.obj"
   "CMakeFiles/gomoku.dir/src/search.cpp.obj.d"
   "CMakeFiles/gomoku.dir/src/threat.cpp.obj"
@@ -26,6 +27,6 @@ file(REMOVE_RECURSE
 )
 
 # Per-language clean rules from dependency scanning.
-foreach(lang CXX)
+foreach(lang CXX RC)
   include(CMakeFiles/gomoku.dir/cmake_clean_${lang}.cmake OPTIONAL)
 endforeach()

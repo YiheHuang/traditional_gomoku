@@ -272,6 +272,14 @@ src/pattern.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/pattern.cpp.s
 .PHONY : src/pattern.cpp.s
 
+src/resource.obj: src/resource.rc.obj
+.PHONY : src/resource.obj
+
+# target to build an object file
+src/resource.rc.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/resource.rc.obj
+.PHONY : src/resource.rc.obj
+
 src/search.obj: src/search.cpp.obj
 .PHONY : src/search.obj
 
@@ -395,6 +403,7 @@ help:
 	@echo ... src/pattern.obj
 	@echo ... src/pattern.i
 	@echo ... src/pattern.s
+	@echo ... src/resource.obj
 	@echo ... src/search.obj
 	@echo ... src/search.i
 	@echo ... src/search.s

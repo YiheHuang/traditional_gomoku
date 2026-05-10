@@ -8,6 +8,7 @@
 #include <atomic>
 #include <mutex>
 #include <cmath>
+#include <algorithm>
 
 // ── global state ──────────────────────────────────────────────
 static Game          gGame;
@@ -18,10 +19,39 @@ static std::thread   gAiThread;
 static std::atomic<bool> gAiRunning{false};
 static std::mutex    gMutex;
 static Move          gLastAiMove;
-static bool          gPlayerIsBlack = true;    // player = black by default
+static bool          gPlayerIsBlack = true;  // player = black by default
 static int           gHoverR = -1, gHoverC = -1;
 static bool          gGameOver = false;
 static std::wstring  gStatus = L"你的回合 (● 黑棋)";
+
+// ── dynamic layout (computed from actual client rect) ─────────
+static int gCell  = 36;
+static int gLeft  = 50;
+static int gTop   = 70;
+static int gPx    = 504;  // gCell * 14
+static int gRad   = 16;
+
+static void computeLayout() {
+    RECT rc;
+    GetClientRect(gHwnd, &rc);
+    int cw = rc.right - rc.left;
+    int ch = rc.bottom - rc.top;
+
+    int availW = cw - 70;   // row labels both sides
+    int availH = ch - 130;  // title + col labels + status bar
+
+    gCell = (std::min)(availW, availH) / 14;
+    if (gCell < 22) gCell = 22;
+    if (gCell > 48) gCell = 48;
+
+    gPx  = gCell * 14;
+    gLeft = (cw - gPx) / 2;
+    if (gLeft < 35) gLeft = 35;
+    gTop  = (ch - gPx) / 2 + 10;  // slight bias upward for title room
+    if (gTop < 45) gTop = 45;
+    gRad  = (gCell * 17) / 38;
+    if (gRad < 10) gRad = 10;
+}
 
 // ── forward / helper ──────────────────────────────────────────
 static void startAiThink();
@@ -82,10 +112,7 @@ static void doNewGame() {
     updateStatus();
     InvalidateRect(gHwnd, nullptr, TRUE);
 
-    // AI goes first?
-    if (!gPlayerIsBlack) {
-        startAiThink();
-    }
+    if (!gPlayerIsBlack) startAiThink();
 }
 
 static void updateStatus() {
@@ -110,7 +137,7 @@ static void updateStatus() {
 
 static void updateMenu() {
     if (!gMenu) return;
-    MENUITEMINFOW mii = { sizeof(MENUITEMINFOW) };
+    MENUITEMINFOW mii = { sizeof(mii) };
     mii.fMask = MIIM_STATE;
     mii.fState = MFS_UNCHECKED;
     SetMenuItemInfoW(gMenu, IDM_TIME_1S, FALSE, &mii);
@@ -129,17 +156,17 @@ static void updateMenu() {
 
 // ── coordinate conversion ─────────────────────────────────────
 static void getBoardPos(int mx, int my, int& r, int& c) {
-    int col = (int)std::round((mx - UIWin::BOARD_LEFT) / (double)UIWin::CELL_SIZE);
-    int row = (int)std::round((my - UIWin::BOARD_TOP)  / (double)UIWin::CELL_SIZE);
+    int col = (int)std::round((mx - gLeft) / (double)gCell);
+    int row = (int)std::round((my - gTop)  / (double)gCell);
     if (col < 0) col = 0;
     if (col >= BOARD_SIZE) col = BOARD_SIZE - 1;
     if (row < 0) row = 0;
     if (row >= BOARD_SIZE) row = BOARD_SIZE - 1;
-    // check if click is close enough to intersection
-    int px = UIWin::BOARD_LEFT + col * UIWin::CELL_SIZE;
-    int py = UIWin::BOARD_TOP  + row * UIWin::CELL_SIZE;
+
+    int px = gLeft + col * gCell;
+    int py = gTop  + row * gCell;
     int dx = mx - px, dy = my - py;
-    if (dx*dx + dy*dy > UIWin::RADIUS * UIWin::RADIUS) {
+    if (dx*dx + dy*dy > gRad * gRad) {
         r = -1; c = -1;
     } else {
         r = row; c = col;
@@ -162,8 +189,8 @@ static void paintBoard(HDC hdc) {
     DeleteObject(bgBrush);
 
     // board area slightly darker
-    int bx = UIWin::BOARD_LEFT - 20, by = UIWin::BOARD_TOP - 20;
-    int bw = UIWin::BOARD_PX + 40, bh = UIWin::BOARD_PX + 40;
+    int bx = gLeft - 22, by = gTop - 22;
+    int bw = gPx + 44, bh = gPx + 44;
     HBRUSH boardBg = CreateSolidBrush(RGB(210, 165, 100));
     RECT brc = { bx, by, bx + bw, by + bh };
     FillRect(memDC, &brc, boardBg);
@@ -173,22 +200,23 @@ static void paintBoard(HDC hdc) {
     HPEN gridPen = CreatePen(PS_SOLID, 1, RGB(60, 40, 20));
     HPEN oldPen = (HPEN)SelectObject(memDC, gridPen);
     for (int i = 0; i < BOARD_SIZE; ++i) {
-        int pos = UIWin::BOARD_LEFT + i * UIWin::CELL_SIZE;
-        MoveToEx(memDC, pos, UIWin::BOARD_TOP, nullptr);
-        LineTo(memDC, pos, UIWin::BOARD_TOP + UIWin::BOARD_PX);
-        MoveToEx(memDC, UIWin::BOARD_LEFT, pos, nullptr);
-        LineTo(memDC, UIWin::BOARD_LEFT + UIWin::BOARD_PX, pos);
+        int pos = gLeft + i * gCell;
+        MoveToEx(memDC, pos, gTop, nullptr);
+        LineTo(memDC, pos, gTop + gPx);
+        MoveToEx(memDC, gLeft, pos, nullptr);
+        LineTo(memDC, gLeft + gPx, pos);
     }
 
-    // star points (天元和星位)
-    int stars[][2] = {{7,7}, {3,3}, {3,7}, {3,11}, {7,3}, {7,11}, {11,3}, {11,7}, {11,11}};
+    // star points
+    int stars[][2] = {{7,7},{3,3},{3,7},{3,11},{7,3},{7,11},{11,3},{11,7},{11,11}};
+    int sd = (gCell > 30) ? 3 : 2;
     HBRUSH starBrush = CreateSolidBrush(RGB(60, 40, 20));
     SelectObject(memDC, starBrush);
     SelectObject(memDC, GetStockObject(NULL_PEN));
     for (auto& s : stars) {
-        int sx = UIWin::BOARD_LEFT + s[0] * UIWin::CELL_SIZE - 3;
-        int sy = UIWin::BOARD_TOP  + s[1] * UIWin::CELL_SIZE - 3;
-        Ellipse(memDC, sx, sy, sx + 7, sy + 7);
+        int sx = gLeft + s[0] * gCell - sd;
+        int sy = gTop  + s[1] * gCell - sd;
+        Ellipse(memDC, sx, sy, sx + sd*2+1, sy + sd*2+1);
     }
     DeleteObject(starBrush);
 
@@ -206,53 +234,74 @@ static void paintBoard(HDC hdc) {
         bool playerTurn = (gPlayerIsBlack && side == BLACK) ||
                           (!gPlayerIsBlack && side == WHITE);
         if (playerTurn && board.isEmpty(gHoverR, gHoverC)) {
-            int px = UIWin::BOARD_LEFT + gHoverC * UIWin::CELL_SIZE;
-            int py = UIWin::BOARD_TOP  + gHoverR * UIWin::CELL_SIZE;
+            int px = gLeft + gHoverC * gCell;
+            int py = gTop  + gHoverR * gCell;
             HPEN dotPen = CreatePen(PS_DOT, 1, side == BLACK ? RGB(30,30,30) : RGB(220,220,220));
             SelectObject(memDC, dotPen);
             HBRUSH hovBrush = CreateSolidBrush(side == BLACK ? RGB(60,60,60) : RGB(240,240,240));
             SelectObject(memDC, hovBrush);
-            Ellipse(memDC, px - UIWin::RADIUS, py - UIWin::RADIUS,
-                    px + UIWin::RADIUS, py + UIWin::RADIUS);
+            Ellipse(memDC, px - gRad, py - gRad, px + gRad, py + gRad);
             DeleteObject(hovBrush);
             DeleteObject(dotPen);
         }
     }
 
     // column labels
-    SelectObject(memDC, GetStockObject(DEFAULT_GUI_FONT));
+    HFONT labelFont = CreateFontW(
+        -(gCell * 8 / 36), 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+        DEFAULT_QUALITY, DEFAULT_PITCH, L"Consolas");
+    HFONT oldFont = (HFONT)SelectObject(memDC, labelFont);
     SetBkMode(memDC, TRANSPARENT);
     SetTextColor(memDC, RGB(60, 40, 20));
+
+    int labelW = gCell;
     for (int i = 0; i < BOARD_SIZE; ++i) {
-        int x = UIWin::BOARD_LEFT + i * UIWin::CELL_SIZE;
+        int x = gLeft + i * gCell;
         wchar_t label[2] = { (wchar_t)(i < 10 ? L'0' + i : L'A' + i - 10), 0 };
-        RECT lr = { x - 10, UIWin::BOARD_TOP - 30, x + 10, UIWin::BOARD_TOP - 10 };
+        RECT lr = { x - labelW/2, gTop - gCell/2 - 8, x + labelW/2, gTop - 4 };
         DrawTextW(memDC, label, -1, &lr, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-        lr = { x - 10, UIWin::BOARD_TOP + UIWin::BOARD_PX + 10, x + 10, UIWin::BOARD_TOP + UIWin::BOARD_PX + 30 };
+        lr = { x - labelW/2, gTop + gPx + 4, x + labelW/2, gTop + gPx + gCell/2 + 8 };
         DrawTextW(memDC, label, -1, &lr, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     }
     // row labels
     for (int i = 0; i < BOARD_SIZE; ++i) {
-        int y = UIWin::BOARD_TOP + i * UIWin::CELL_SIZE;
+        int y = gTop + i * gCell;
         wchar_t label[2] = { (wchar_t)(i < 10 ? L'0' + i : L'A' + i - 10), 0 };
-        RECT lr = { UIWin::BOARD_LEFT - 30, y - 10, UIWin::BOARD_LEFT - 5, y + 10 };
+        RECT lr = { gLeft - gCell/2 - 12, y - gCell/2, gLeft - 8, y + gCell/2 };
         DrawTextW(memDC, label, -1, &lr, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-        lr = { UIWin::BOARD_LEFT + UIWin::BOARD_PX + 5, y - 10, UIWin::BOARD_LEFT + UIWin::BOARD_PX + 30, y + 10 };
+        lr = { gLeft + gPx + 8, y - gCell/2, gLeft + gPx + gCell/2 + 12, y + gCell/2 };
         DrawTextW(memDC, label, -1, &lr, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     }
 
+    SelectObject(memDC, oldFont);
+    DeleteObject(labelFont);
+
     // title
+    HFONT titleFont = CreateFontW(-18, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+        DEFAULT_QUALITY, DEFAULT_PITCH, L"Microsoft YaHei");
+    SelectObject(memDC, titleFont);
     SetTextColor(memDC, RGB(40, 20, 0));
-    RECT titleRC = { 0, 5, rc.right, 35 };
-    DrawTextW(memDC, L"五子棋 AI  —  Alpha-Beta + VCT/VCF", -1, &titleRC, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    RECT titleRC = { 0, 5, rc.right, (std::min)(35, gTop - 15) };
+    DrawTextW(memDC, L"五子棋 AI  —  Alpha-Beta", -1, &titleRC, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    SelectObject(memDC, oldFont);
+    DeleteObject(titleFont);
 
     // status bar
-    RECT statusRC = { 0, rc.bottom - 35, rc.right, rc.bottom };
+    int sbH = 30;
+    RECT statusRC = { 0, rc.bottom - sbH, rc.right, rc.bottom };
     HBRUSH statusBg = CreateSolidBrush(RGB(180, 140, 80));
     FillRect(memDC, &statusRC, statusBg);
     DeleteObject(statusBg);
+    HFONT stFont = CreateFontW(-16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+        DEFAULT_QUALITY, DEFAULT_PITCH, L"Microsoft YaHei");
+    SelectObject(memDC, stFont);
     SetTextColor(memDC, RGB(40, 20, 0));
     DrawTextW(memDC, gStatus.c_str(), -1, &statusRC, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    SelectObject(memDC, oldFont);
+    DeleteObject(stFont);
 
     // blit
     BitBlt(hdc, 0, 0, rc.right, rc.bottom, memDC, 0, 0, SRCCOPY);
@@ -264,9 +313,9 @@ static void paintBoard(HDC hdc) {
 }
 
 static void paintStone(HDC hdc, int r, int c, int color, bool last) {
-    int px = UIWin::BOARD_LEFT + c * UIWin::CELL_SIZE;
-    int py = UIWin::BOARD_TOP  + r * UIWin::CELL_SIZE;
-    int R  = UIWin::RADIUS;
+    int px = gLeft + c * gCell;
+    int py = gTop  + r * gCell;
+    int R  = gRad;
 
     if (color == BLACK) {
         HBRUSH br = CreateSolidBrush(RGB(20, 20, 20));
@@ -287,11 +336,11 @@ static void paintStone(HDC hdc, int r, int c, int color, bool last) {
     }
 
     if (last) {
-        // small red dot on last AI move
+        int ds = (gRad > 12) ? 4 : 2;
         HBRUSH dotBr = CreateSolidBrush(RGB(220, 50, 50));
         SelectObject(hdc, dotBr);
         SelectObject(hdc, GetStockObject(NULL_PEN));
-        Ellipse(hdc, px - 4, py - 4, px + 4, py + 4);
+        Ellipse(hdc, px - ds, py - ds, px + ds, py + ds);
         DeleteObject(dotBr);
     }
 }
@@ -302,6 +351,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 
     case WM_CREATE: {
         gHwnd = hwnd;
+        computeLayout();
+
         // build menu
         HMENU gameMenu = CreateMenu();
         AppendMenuW(gameMenu, MF_STRING, IDM_NEWGAME, L"新游戏(&N)");
@@ -405,6 +456,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         }
         return 0;
 
+    case WM_SIZE:
+        computeLayout();
+        InvalidateRect(hwnd, nullptr, TRUE);
+        return 0;
+
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
@@ -428,7 +484,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 UIWin::UIWin() {}
 
 int UIWin::run(HINSTANCE hInstance, int nCmdShow) {
-    // register window class
     WNDCLASSEXW wc = {};
     wc.cbSize        = sizeof(WNDCLASSEXW);
     wc.style         = CS_HREDRAW | CS_VREDRAW;
@@ -440,8 +495,7 @@ int UIWin::run(HINSTANCE hInstance, int nCmdShow) {
     wc.hIcon         = LoadIcon(nullptr, IDI_APPLICATION);
     RegisterClassExW(&wc);
 
-    // create window
-    RECT wr = { 0, 0, WND_W, WND_H };
+    RECT wr = { 0, 0, DEF_WND_W, DEF_WND_H };
     AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, TRUE);
 
     HWND hwnd = CreateWindowExW(
@@ -456,17 +510,14 @@ int UIWin::run(HINSTANCE hInstance, int nCmdShow) {
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
 
-    // message loop
     MSG msg = {};
     while (GetMessageW(&msg, nullptr, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
 
-    // cleanup
     if (gAiRunning.load()) {
         gGame.engine().stop();
-        // give thread a moment
         Sleep(200);
     }
 
