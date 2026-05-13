@@ -115,17 +115,45 @@ cmake --build build --config Release
 
 ## 打包安装包
 
-```bash
-# 1. 编译自包含 exe
-cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release
+本项目使用 **PyInstaller** 打包为独立 exe，再通过 **Inno Setup** 生成安装程序。
 
-# 2. 生成安装包 (需安装 Inno Setup)
-"C:/InnoSetup/ISCC.exe" installer/setup.iss
-# → installer/GomokuAI-Setup-1.0.exe
+### 依赖
+
+```bash
+pip install pyinstaller pybind11
 ```
 
-安装包支持中文向导、自定义安装路径、开始菜单快捷方式、控制面板卸载、Windows 版本检测。
+需安装 [Inno Setup](https://jrsoftware.org/isinfo.php)（免费）。
+
+### 一键打包
+
+```bash
+# 1. 编译 C++ pybind11 扩展
+cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release \
+    -Dpybind11_DIR="<Python路径>/Lib/site-packages/pybind11/share/cmake/pybind11"
+cmake --build build --config Release
+
+# 2. 复制 .pyd 到包目录
+cp build/_gomoku_core*.pyd gomoku/
+
+# 3. PyInstaller 打包为独立 exe
+pyinstaller --onefile --windowed --name GomokuAI --icon src/icon.ico \
+    --add-binary "gomoku/_gomoku_core*.pyd;." main.py
+# → dist/GomokuAI.exe  (~11 MB)
+
+# 4. Inno Setup 生成安装包
+"C:/InnoSetup/ISCC.exe" installer/setup.iss
+# → installer/GomokuAI-Setup-1.1.exe  (~12 MB)
+```
+
+### 安装包特性
+
+- 中文安装向导
+- 自定义安装路径（默认 `%ProgramFiles%\GomokuAI`）
+- 开始菜单快捷方式 + 可选桌面快捷方式
+- 控制面板 → 添加/删除程序中可卸载
+- Windows 7+ 版本检测
+- 单文件 exe，自包含 Python 运行时和 C++ 引擎，无需额外安装
 
 ## 技术参数
 

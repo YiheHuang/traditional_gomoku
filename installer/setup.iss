@@ -1,7 +1,7 @@
 #define MyAppName "五子棋 AI"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.1"
 #define MyAppPublisher "Gomoku AI"
-#define MyAppExeName "gomoku.exe"
+#define MyAppExeName "GomokuAI.exe"
 
 [Setup]
 AppId={{3F8B9C2A-1D5E-4A67-B3F8-9C2A1D5E4A67}
@@ -12,7 +12,7 @@ DefaultDirName={autopf}\GomokuAI
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=..\installer
-OutputBaseFilename=GomokuAI-Setup-1.0
+OutputBaseFilename=GomokuAI-Setup-1.1
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -31,7 +31,7 @@ chinesesimp.BeveledLabel=五子棋 AI
 Name: "desktopicon"; Description: "创建桌面快捷方式(&D)"; GroupDescription: "其他:"
 
 [Files]
-Source: "..\build\gomoku.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\GomokuAI.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

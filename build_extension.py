@@ -34,8 +34,8 @@ def build():
     # Find and copy the .pyd
     pyd_files = list(BUILD_DIR.glob("_gomoku_core*.pyd"))
     if pyd_files:
-        print(f"[3/3] Found: {pyd_files[0].name}")
-        # Also leave a copy in the build directory for gomoku/__init__.py
+        print(f"[3/3] Copying {pyd_files[0].name} → gomoku/")
+        shutil.copy2(str(pyd_files[0]), str(ROOT / "gomoku" / pyd_files[0].name))
         print("Done. Run: python main.py")
     else:
         print("ERROR: .pyd not found in build directory")

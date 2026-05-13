@@ -21,7 +21,7 @@ BOARD_PX = CELL * 14 # total grid span (532 px)
 
 # canvas size derived from layout
 CANVAS_W = LEFT + BOARD_PX + LEFT      # 54+532+54 = 640
-CANVAS_H = TOP  + BOARD_PX + (LEFT-4)  # 74+532+50 = 656
+CANVAS_H = TOP  + BOARD_PX + (LEFT+16) # 74+532+70 = 676
 
 # intersection pixel position
 def ix(col): return LEFT + col * CELL
@@ -54,7 +54,8 @@ class GomokuApp:
         self._ana_idx = -1            # -1 = no moves; 0..N-1 = viewing move N
         self._ana_cands = []          # [{row,col,wr}, ...]
         self._ana_score = 0           # search score of current position
-        self._ana_cache = {}          # board hash → (score, cands) to avoid re-search
+        self._ana_side = BLACK        # which side _ana_score is from
+        self._ana_cache = {}          # board hash → (score, cands, side) to avoid re-search
 
         self._build_ui()
         self._update_status()
@@ -237,14 +238,13 @@ class GomokuApp:
         # ── analysis progress bar ───────────────────────────────
         if self._mode == "analysis":
             wr_cur = self._score_to_winrate(self._ana_score)
-            # convert to black's perspective
-            side = board.side
-            black_wr = wr_cur if side == BLACK else (100.0 - wr_cur)
+            # convert to black's perspective using the side at analysis time
+            black_wr = wr_cur if self._ana_side == BLACK else (100.0 - wr_cur)
             white_wr = 100.0 - black_wr
 
             bar_w, bar_h = 300, 18
             bar_x = (CANVAS_W - bar_w) // 2
-            bar_y = iy(14) + 22   # just below the board
+            bar_y = iy(14) + CELL//2 + 20   # below bottom labels
 
             # background
             c.create_rectangle(bar_x, bar_y, bar_x + bar_w, bar_y + bar_h,
@@ -416,7 +416,7 @@ class GomokuApp:
         board = self._game.getBoard()
         h = board.hash()
         if h in self._ana_cache:
-            self._ana_score, self._ana_cands = self._ana_cache[h]
+            self._ana_score, self._ana_cands, self._ana_side = self._ana_cache[h]
             self._ai_busy = False
             self._update_status()
             self._draw()
@@ -449,8 +449,9 @@ class GomokuApp:
 
         cands.sort(key=lambda x: x["score"], reverse=True)
         self._ana_score = best_score if cands else 0
+        self._ana_side = board_ref.side  # perspective this score is from
         self._ana_cands = cands
-        self._ana_cache[hash_key] = (self._ana_score, cands)
+        self._ana_cache[hash_key] = (self._ana_score, cands, self._ana_side)
         self._ai_busy = False
         self._root.after(0, self._analysis_done)
 
