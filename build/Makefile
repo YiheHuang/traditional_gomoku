@@ -116,24 +116,48 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named gomoku
+# Target rules for targets named _gomoku_core
 
 # Build rule for target.
-gomoku: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 gomoku
-.PHONY : gomoku
+_gomoku_core: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 _gomoku_core
+.PHONY : _gomoku_core
 
 # fast build rule for target.
-gomoku/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/build
-.PHONY : gomoku/fast
+_gomoku_core/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/build
+.PHONY : _gomoku_core/fast
+
+src/bindings.obj: src/bindings.cpp.obj
+.PHONY : src/bindings.obj
+
+# target to build an object file
+src/bindings.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/bindings.cpp.obj
+.PHONY : src/bindings.cpp.obj
+
+src/bindings.i: src/bindings.cpp.i
+.PHONY : src/bindings.i
+
+# target to preprocess a source file
+src/bindings.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/bindings.cpp.i
+.PHONY : src/bindings.cpp.i
+
+src/bindings.s: src/bindings.cpp.s
+.PHONY : src/bindings.s
+
+# target to generate assembly for a file
+src/bindings.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/bindings.cpp.s
+.PHONY : src/bindings.cpp.s
 
 src/board.obj: src/board.cpp.obj
 .PHONY : src/board.obj
 
 # target to build an object file
 src/board.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/board.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/board.cpp.obj
 .PHONY : src/board.cpp.obj
 
 src/board.i: src/board.cpp.i
@@ -141,7 +165,7 @@ src/board.i: src/board.cpp.i
 
 # target to preprocess a source file
 src/board.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/board.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/board.cpp.i
 .PHONY : src/board.cpp.i
 
 src/board.s: src/board.cpp.s
@@ -149,7 +173,7 @@ src/board.s: src/board.cpp.s
 
 # target to generate assembly for a file
 src/board.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/board.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/board.cpp.s
 .PHONY : src/board.cpp.s
 
 src/evaluator.obj: src/evaluator.cpp.obj
@@ -157,7 +181,7 @@ src/evaluator.obj: src/evaluator.cpp.obj
 
 # target to build an object file
 src/evaluator.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/evaluator.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/evaluator.cpp.obj
 .PHONY : src/evaluator.cpp.obj
 
 src/evaluator.i: src/evaluator.cpp.i
@@ -165,7 +189,7 @@ src/evaluator.i: src/evaluator.cpp.i
 
 # target to preprocess a source file
 src/evaluator.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/evaluator.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/evaluator.cpp.i
 .PHONY : src/evaluator.cpp.i
 
 src/evaluator.s: src/evaluator.cpp.s
@@ -173,7 +197,7 @@ src/evaluator.s: src/evaluator.cpp.s
 
 # target to generate assembly for a file
 src/evaluator.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/evaluator.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/evaluator.cpp.s
 .PHONY : src/evaluator.cpp.s
 
 src/game.obj: src/game.cpp.obj
@@ -181,7 +205,7 @@ src/game.obj: src/game.cpp.obj
 
 # target to build an object file
 src/game.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/game.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/game.cpp.obj
 .PHONY : src/game.cpp.obj
 
 src/game.i: src/game.cpp.i
@@ -189,7 +213,7 @@ src/game.i: src/game.cpp.i
 
 # target to preprocess a source file
 src/game.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/game.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/game.cpp.i
 .PHONY : src/game.cpp.i
 
 src/game.s: src/game.cpp.s
@@ -197,39 +221,15 @@ src/game.s: src/game.cpp.s
 
 # target to generate assembly for a file
 src/game.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/game.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/game.cpp.s
 .PHONY : src/game.cpp.s
-
-src/main.obj: src/main.cpp.obj
-.PHONY : src/main.obj
-
-# target to build an object file
-src/main.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/main.cpp.obj
-.PHONY : src/main.cpp.obj
-
-src/main.i: src/main.cpp.i
-.PHONY : src/main.i
-
-# target to preprocess a source file
-src/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/main.cpp.i
-.PHONY : src/main.cpp.i
-
-src/main.s: src/main.cpp.s
-.PHONY : src/main.s
-
-# target to generate assembly for a file
-src/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/main.cpp.s
-.PHONY : src/main.cpp.s
 
 src/movegen.obj: src/movegen.cpp.obj
 .PHONY : src/movegen.obj
 
 # target to build an object file
 src/movegen.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/movegen.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/movegen.cpp.obj
 .PHONY : src/movegen.cpp.obj
 
 src/movegen.i: src/movegen.cpp.i
@@ -237,7 +237,7 @@ src/movegen.i: src/movegen.cpp.i
 
 # target to preprocess a source file
 src/movegen.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/movegen.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/movegen.cpp.i
 .PHONY : src/movegen.cpp.i
 
 src/movegen.s: src/movegen.cpp.s
@@ -245,7 +245,7 @@ src/movegen.s: src/movegen.cpp.s
 
 # target to generate assembly for a file
 src/movegen.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/movegen.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/movegen.cpp.s
 .PHONY : src/movegen.cpp.s
 
 src/pattern.obj: src/pattern.cpp.obj
@@ -253,7 +253,7 @@ src/pattern.obj: src/pattern.cpp.obj
 
 # target to build an object file
 src/pattern.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/pattern.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/pattern.cpp.obj
 .PHONY : src/pattern.cpp.obj
 
 src/pattern.i: src/pattern.cpp.i
@@ -261,7 +261,7 @@ src/pattern.i: src/pattern.cpp.i
 
 # target to preprocess a source file
 src/pattern.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/pattern.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/pattern.cpp.i
 .PHONY : src/pattern.cpp.i
 
 src/pattern.s: src/pattern.cpp.s
@@ -269,23 +269,15 @@ src/pattern.s: src/pattern.cpp.s
 
 # target to generate assembly for a file
 src/pattern.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/pattern.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/pattern.cpp.s
 .PHONY : src/pattern.cpp.s
-
-src/resource.obj: src/resource.rc.obj
-.PHONY : src/resource.obj
-
-# target to build an object file
-src/resource.rc.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/resource.rc.obj
-.PHONY : src/resource.rc.obj
 
 src/search.obj: src/search.cpp.obj
 .PHONY : src/search.obj
 
 # target to build an object file
 src/search.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/search.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/search.cpp.obj
 .PHONY : src/search.cpp.obj
 
 src/search.i: src/search.cpp.i
@@ -293,7 +285,7 @@ src/search.i: src/search.cpp.i
 
 # target to preprocess a source file
 src/search.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/search.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/search.cpp.i
 .PHONY : src/search.cpp.i
 
 src/search.s: src/search.cpp.s
@@ -301,7 +293,7 @@ src/search.s: src/search.cpp.s
 
 # target to generate assembly for a file
 src/search.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/search.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/search.cpp.s
 .PHONY : src/search.cpp.s
 
 src/threat.obj: src/threat.cpp.obj
@@ -309,7 +301,7 @@ src/threat.obj: src/threat.cpp.obj
 
 # target to build an object file
 src/threat.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/threat.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/threat.cpp.obj
 .PHONY : src/threat.cpp.obj
 
 src/threat.i: src/threat.cpp.i
@@ -317,7 +309,7 @@ src/threat.i: src/threat.cpp.i
 
 # target to preprocess a source file
 src/threat.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/threat.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/threat.cpp.i
 .PHONY : src/threat.cpp.i
 
 src/threat.s: src/threat.cpp.s
@@ -325,7 +317,7 @@ src/threat.s: src/threat.cpp.s
 
 # target to generate assembly for a file
 src/threat.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/threat.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/threat.cpp.s
 .PHONY : src/threat.cpp.s
 
 src/transposition.obj: src/transposition.cpp.obj
@@ -333,7 +325,7 @@ src/transposition.obj: src/transposition.cpp.obj
 
 # target to build an object file
 src/transposition.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/transposition.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/transposition.cpp.obj
 .PHONY : src/transposition.cpp.obj
 
 src/transposition.i: src/transposition.cpp.i
@@ -341,7 +333,7 @@ src/transposition.i: src/transposition.cpp.i
 
 # target to preprocess a source file
 src/transposition.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/transposition.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/transposition.cpp.i
 .PHONY : src/transposition.cpp.i
 
 src/transposition.s: src/transposition.cpp.s
@@ -349,32 +341,8 @@ src/transposition.s: src/transposition.cpp.s
 
 # target to generate assembly for a file
 src/transposition.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/transposition.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/src/transposition.cpp.s
 .PHONY : src/transposition.cpp.s
-
-src/ui_win.obj: src/ui_win.cpp.obj
-.PHONY : src/ui_win.obj
-
-# target to build an object file
-src/ui_win.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/ui_win.cpp.obj
-.PHONY : src/ui_win.cpp.obj
-
-src/ui_win.i: src/ui_win.cpp.i
-.PHONY : src/ui_win.i
-
-# target to preprocess a source file
-src/ui_win.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/ui_win.cpp.i
-.PHONY : src/ui_win.cpp.i
-
-src/ui_win.s: src/ui_win.cpp.s
-.PHONY : src/ui_win.s
-
-# target to generate assembly for a file
-src/ui_win.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/src/ui_win.cpp.s
-.PHONY : src/ui_win.cpp.s
 
 # Help Target
 help:
@@ -384,7 +352,10 @@ help:
 	@echo ... depend
 	@echo ... edit_cache
 	@echo ... rebuild_cache
-	@echo ... gomoku
+	@echo ... _gomoku_core
+	@echo ... src/bindings.obj
+	@echo ... src/bindings.i
+	@echo ... src/bindings.s
 	@echo ... src/board.obj
 	@echo ... src/board.i
 	@echo ... src/board.s
@@ -394,16 +365,12 @@ help:
 	@echo ... src/game.obj
 	@echo ... src/game.i
 	@echo ... src/game.s
-	@echo ... src/main.obj
-	@echo ... src/main.i
-	@echo ... src/main.s
 	@echo ... src/movegen.obj
 	@echo ... src/movegen.i
 	@echo ... src/movegen.s
 	@echo ... src/pattern.obj
 	@echo ... src/pattern.i
 	@echo ... src/pattern.s
-	@echo ... src/resource.obj
 	@echo ... src/search.obj
 	@echo ... src/search.i
 	@echo ... src/search.s
@@ -413,9 +380,6 @@ help:
 	@echo ... src/transposition.obj
 	@echo ... src/transposition.i
 	@echo ... src/transposition.s
-	@echo ... src/ui_win.obj
-	@echo ... src/ui_win.i
-	@echo ... src/ui_win.s
 .PHONY : help
 
 

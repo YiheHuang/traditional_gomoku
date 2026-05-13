@@ -62,11 +62,11 @@ CMAKE_BINARY_DIR = "C:\Users\Yihe Huang\TJU\traditional_gomoku\build"
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/gomoku.dir/all
+all: CMakeFiles/_gomoku_core.dir/all
 .PHONY : all
 
 # The main recursive "codegen" target.
-codegen: CMakeFiles/gomoku.dir/codegen
+codegen: CMakeFiles/_gomoku_core.dir/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
@@ -74,40 +74,40 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/gomoku.dir/clean
+clean: CMakeFiles/_gomoku_core.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/gomoku.dir
+# Target rules for target CMakeFiles/_gomoku_core.dir
 
 # All Build rule for target.
-CMakeFiles/gomoku.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="C:\Users\Yihe Huang\TJU\traditional_gomoku\build\CMakeFiles" --progress-num=1,2,3,4,5,6,7,8,9,10,11,12 "Built target gomoku"
-.PHONY : CMakeFiles/gomoku.dir/all
+CMakeFiles/_gomoku_core.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="C:\Users\Yihe Huang\TJU\traditional_gomoku\build\CMakeFiles" --progress-num=1,2,3,4,5,6,7,8,9,10 "Built target _gomoku_core"
+.PHONY : CMakeFiles/_gomoku_core.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/gomoku.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start "C:\Users\Yihe Huang\TJU\traditional_gomoku\build\CMakeFiles" 12
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/gomoku.dir/all
+CMakeFiles/_gomoku_core.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start "C:\Users\Yihe Huang\TJU\traditional_gomoku\build\CMakeFiles" 10
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/_gomoku_core.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start "C:\Users\Yihe Huang\TJU\traditional_gomoku\build\CMakeFiles" 0
-.PHONY : CMakeFiles/gomoku.dir/rule
+.PHONY : CMakeFiles/_gomoku_core.dir/rule
 
 # Convenience name for target.
-gomoku: CMakeFiles/gomoku.dir/rule
-.PHONY : gomoku
+_gomoku_core: CMakeFiles/_gomoku_core.dir/rule
+.PHONY : _gomoku_core
 
 # codegen rule for target.
-CMakeFiles/gomoku.dir/codegen:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="C:\Users\Yihe Huang\TJU\traditional_gomoku\build\CMakeFiles" --progress-num=1,2,3,4,5,6,7,8,9,10,11,12 "Finished codegen for target gomoku"
-.PHONY : CMakeFiles/gomoku.dir/codegen
+CMakeFiles/_gomoku_core.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="C:\Users\Yihe Huang\TJU\traditional_gomoku\build\CMakeFiles" --progress-num=1,2,3,4,5,6,7,8,9,10 "Finished codegen for target _gomoku_core"
+.PHONY : CMakeFiles/_gomoku_core.dir/codegen
 
 # clean rule for target.
-CMakeFiles/gomoku.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\gomoku.dir\build.make CMakeFiles/gomoku.dir/clean
-.PHONY : CMakeFiles/gomoku.dir/clean
+CMakeFiles/_gomoku_core.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\_gomoku_core.dir\build.make CMakeFiles/_gomoku_core.dir/clean
+.PHONY : CMakeFiles/_gomoku_core.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

@@ -191,6 +191,11 @@ int SearchEngine::alphaBeta(Board& board, int depth, int alpha, int beta,
 
         board.undoMove();
 
+        // --- record root candidate score ---
+        if (ply == 0) {
+            rootScores.push_back({moves[i], score});
+        }
+
         if (score > bestVal) {
             bestVal = score;
             bestMove = moves[i];
@@ -226,6 +231,7 @@ SearchResult SearchEngine::search(const Board& board) {
     totalNodes = 0;
     ttHits = 0;
     ttMisses = 0;
+    rootScores.clear();
 
     Board b = board; // mutable copy
 
@@ -234,12 +240,15 @@ SearchResult SearchEngine::search(const Board& board) {
     int bestScoreSoFar = 0;
     int completedDepth = 0;
 
+    std::vector<std::pair<Move, int>> bestRootScores;
     for (int d = 1; d <= config.maxDepth; ++d) {
+        rootScores.clear();
         alphaBeta(b, d, -999999999, 999999999, 0, false);
 
         if (outOfTime()) break;
 
         completedDepth = d;
+        bestRootScores = rootScores;  // save deepest complete iteration
         // Retrieve best move and score from TT
         const TTEntry* entry = tt.probe(b.hash());
         if (entry && entry->bestMove.valid()) {
@@ -247,6 +256,7 @@ SearchResult SearchEngine::search(const Board& board) {
             bestScoreSoFar = entry->value;
         }
     }
+    rootScores = std::move(bestRootScores);
 
     if (!bestMoveSoFar.valid()) {
         auto moves = movegen.generateMoves(b);

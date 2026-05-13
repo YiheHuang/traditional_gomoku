@@ -1,0 +1,13 @@
+[build-system]
+requires = ["pybind11>=3.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gomoku-ai"
+version = "1.0.0"
+description = "Gomoku AI with Alpha-Beta search (C++/pybind11 core)"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+
+[project.scripts]
+gomoku = "gomoku.app:main"

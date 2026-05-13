@@ -2,6 +2,8 @@
 
 #include <chrono>
 #include <atomic>
+#include <vector>
+#include <utility>
 #include "board.h"
 #include "movegen.h"
 #include "evaluator.h"
@@ -44,6 +46,10 @@ public:
     MoveGenerator& moveGen() { return movegen; }
     TranspositionTable& transTable() { return tt; }
 
+    // After search(), returns (move, score) for all root candidates.
+    // Scores are from the current player's perspective (same convention as alphaBeta).
+    const std::vector<std::pair<Move, int>>& getRootScores() const { return rootScores; }
+
 private:
     SearchConfig config;
     Evaluator eval;
@@ -55,6 +61,8 @@ private:
     std::atomic<bool> stopped;
     int totalNodes;
     int ttHits, ttMisses;
+
+    std::vector<std::pair<Move, int>> rootScores;
 
     bool outOfTime() const;
 

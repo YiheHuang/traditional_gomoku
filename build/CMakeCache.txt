@@ -216,6 +216,16 @@ CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
+//Overwrite cached values read from Python library (classic search).
+// Turn off if cross-compiling and manually setting these values.
+PYBIND11_PYTHONLIBS_OVERWRITE:BOOL=ON
+
+//Python version to use for compiling modules
+PYBIND11_PYTHON_VERSION:STRING=
+
+//Path to a program.
+PYTHON_EXECUTABLE:FILEPATH=C:/Users/Yihe Huang/AppData/Local/Programs/Python/Python312/python.exe
+
 //Value Computed by CMake
 gomoku_BINARY_DIR:STATIC=C:/Users/Yihe Huang/TJU/traditional_gomoku/build
 
@@ -224,6 +234,9 @@ gomoku_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
 gomoku_SOURCE_DIR:STATIC=C:/Users/Yihe Huang/TJU/traditional_gomoku
+
+//No help, variable specified on the command line.
+pybind11_DIR:UNINITIALIZED=C:/Users/Yihe Huang/AppData/Local/Programs/Python/Python312/Lib/site-packages/pybind11/share/cmake/pybind11
 
 
 ########################
@@ -372,4 +385,24 @@ CMAKE_STRIP-ADVANCED:INTERNAL=1
 CMAKE_TAPI-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//Details about finding PYTHON
+FIND_PACKAGE_MESSAGE_DETAILS_PYTHON:INTERNAL=C:/Users/Yihe Huang/AppData/Local/Programs/Python/Python312/python.exe3.12.10
+//Details about finding PythonInterp
+FIND_PACKAGE_MESSAGE_DETAILS_PythonInterp:INTERNAL=[C:/Users/Yihe Huang/AppData/Local/Programs/Python/Python312/python.exe][v3.12.10(3.8)]
+//ADVANCED property for variable: PYTHON_EXECUTABLE
+PYTHON_EXECUTABLE-ADVANCED:INTERNAL=1
+PYTHON_INCLUDE_DIRS:INTERNAL=C:/Users/Yihe Huang/AppData/Local/Programs/Python/Python312/Include
+PYTHON_IS_DEBUG:INTERNAL=0
+PYTHON_LIBRARIES:INTERNAL=C:/Users/Yihe Huang/AppData/Local/Programs/Python/Python312/libs/python312.lib
+PYTHON_MODULE_DEBUG_POSTFIX:INTERNAL=
+PYTHON_MODULE_EXTENSION:INTERNAL=.cp312-win_amd64.pyd
+PYTHON_MODULE_PREFIX:INTERNAL=
+PYTHON_VERSION:INTERNAL=3.12.10
+PYTHON_VERSION_MAJOR:INTERNAL=3
+PYTHON_VERSION_MINOR:INTERNAL=12
+Python_ADDITIONAL_VERSIONS:INTERNAL=3.12;3.11;3.10;3.9;3.8
+_PYBIND11_CROSSCOMPILING:INTERNAL=OFF
+_Python:INTERNAL=PYTHON
+//Directories where pybind11 and possibly Python headers are located
+pybind11_INCLUDE_DIRS:INTERNAL=C:/Users/Yihe Huang/AppData/Local/Programs/Python/Python312/Lib/site-packages/pybind11/include;C:/Users/Yihe Huang/AppData/Local/Programs/Python/Python312/Include
 
