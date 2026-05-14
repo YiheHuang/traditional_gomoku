@@ -894,3 +894,302 @@ installer/
   setup.iss              ← Inno Setup 安装脚本（Pascal）
 guidebook.md             ← 本文档
 ```
+
+---
+
+## 14. 线上对战：中转服务器架设与通信原理
+
+### 14.1 为什么需要中转服务器？
+
+两个玩家不在同一局域网时，无法直接建立 TCP 连接（NAT 穿透是复杂且不可靠的）。最简单的方案是引入一台**中转服务器**——它拥有公网 IP，所有客户端都连接到它，由它负责转发消息。
+
+```
+玩家 A (任意网络)          玩家 B (任意网络)
+     │                         │
+     │  TCP :9999              │  TCP :9999
+     ▼                         ▼
+  ┌─────────────────────────────────┐
+  │        中转服务器 (公网 IP)       │
+  │                                  │
+  │  ┌──────────┐  ┌──────────────┐ │
+  │  │ 匹配队列  │  │  对局列表     │ │
+  │  │          │  │  (A ↔ B)     │ │
+  │  │  [A] [B] │  │  Board + 状态 │ │
+  │  └────┬─────┘  └──────┬───────┘ │
+  │       │               │         │
+  │  A 请求匹配 ──→ 配对成功 ──→ 转发棋步 │
+  └─────────────────────────────────┘
+```
+
+**核心优势**：
+- 无需玩家配置路由器/防火墙
+- 服务器可统一验证着法合法性，防止作弊
+- 支持断线检测和自动判胜
+
+### 14.2 技术选型：为什么用 TCP + JSON？
+
+| 选项 | 优势 | 劣势 |
+|------|------|------|
+| **TCP + JSON**（本项目） | 可靠传输、实现简单、零依赖、易调试 | 协议开销略大 |
+| WebSocket | 浏览器友好 | 握手复杂、需额外库 |
+| UDP | 低延迟 | 不可靠、需自行实现重传 |
+| HTTP 长轮询 | 穿透防火墙 | 延迟高、服务器压力大 |
+
+五子棋是**回合制**游戏——每秒最多一手棋，对延迟不敏感。TCP 的可靠传输特性恰好保证"不丢消息"。JSON 编码可读性强，出问题时可以直接用 `nc`（netcat）或 `telnet` 调试：
+
+```bash
+# 手工测试服务器
+echo '{"type":"match"}' | nc 192.144.228.237 9999
+# 返回: {"type":"info","message":"正在寻找对手..."}
+```
+
+### 14.3 通信协议设计
+
+每条消息是**一行紧凑 JSON + 换行符 `\n`**。这个约定非常关键——TCP 是流式协议，没有内置的"消息边界"，用换行符分隔是最简单的分帧方式。
+
+#### 客户端 → 服务器
+
+| type | 参数 | 说明 |
+|------|------|------|
+| `match` | — | 加入匹配队列 |
+| `cancel_match` | — | 取消匹配 |
+| `move` | `row`, `col` | 提交着法 (0-14) |
+| `resign` | — | 认输 |
+| `ping` | — | 心跳保活（30秒间隔） |
+
+#### 服务器 → 客户端
+
+| type | 参数 | 说明 |
+|------|------|------|
+| `info` | `message` | 状态提示文字 |
+| `matched` | `color` | 匹配成功，告知执黑/白 |
+| `move` | `row`, `col` | 对手的着法 |
+| `game_over` | `result`, `reason` | 游戏结束（win/loss/draw） |
+| `opponent_disconnected` | — | 对手断线 |
+| `error` | `message` | 错误信息 |
+| `pong` | — | 心跳响应 |
+
+#### 完整对局消息流示例
+
+```
+玩家 A(黑)                    服务器                     玩家 B(白)
+    │                          │                          │
+    │──── match ──────────────►│                          │
+    │                          │                          │
+    │                          │◄─────── match ──────────│
+    │                          │                          │
+    │◄── matched {black} ─────│──── matched {white} ────►│
+    │                          │                          │
+    │──── move {7,7} ─────────►│                          │
+    │                          │──── move {7,7} ─────────►│
+    │                          │                          │
+    │                          │◄──── move {8,8} ────────│
+    │◄── move {8,8} ──────────│                          │
+    │                          │                          │
+    │──── move {7,8} ─────────►│                          │
+    │                          │──── move {7,8} ─────────►│
+    │                          │                          │
+    │   ... 持续直到五连/认输/断线 ...                      │
+```
+
+**关键设计**：服务器不主动下棋、不思考——它只是一个"哑"转发器 + 规则裁判。所有棋力判断仍由客户端（或客户端的 AI）完成。
+
+### 14.4 服务器内部设计
+
+#### 14.4.1 I/O 模型：selectors 多路复用
+
+服务器使用 Python 标准库的 `selectors` 模块，**单线程**管理所有客户端连接：
+
+```python
+sel = selectors.DefaultSelector()  # Windows→select, Linux→epoll
+
+while running:
+    events = sel.select(timeout=1.0)  # 阻塞等待，1秒超时
+    for key, mask in events:
+        if key.data is None:
+            accept_new_client()   # 监听 socket 可读 → 新连接
+        else:
+            handle_client_msg()   # 客户端 socket 可读 → 处理消息
+```
+
+**为什么不用多线程**？五子棋服务器每秒处理的消息量极低（几十条 JSON），单线程 selectors 完全够用，且避免了锁竞争和线程切换开销。1 秒超时用于周期性心跳检测。
+
+#### 14.4.2 玩家状态机
+
+```
+        连接
+         │
+         ▼
+      ┌──────┐   match    ┌──────────┐   配对成功   ┌─────────┐
+      │ idle │ ─────────► │ matching │ ──────────► │ playing │
+      └──────┘            └──────────┘             └─────────┘
+         ▲                      │                      │
+         │      cancel_match    │      game_over /     │
+         └──────────────────────┘      disconnect      │
+         ◄─────────────────────────────────────────────┘
+```
+
+每个连接对应一个 `Player` 对象，包含套接字、状态、对手引用、颜色、心跳时间戳。
+
+#### 14.4.3 匹配算法
+
+```python
+match_queue = []  # 等待匹配的玩家列表
+
+def try_pair():
+    while len(match_queue) >= 2:
+        p1 = match_queue.pop(0)
+        p2 = match_queue.pop(0)
+        # 随机分配黑白（保证公平）
+        if random() < 0.5:
+            black, white = p1, p2
+        else:
+            black, white = p2, p1
+        # 建立对局关系
+        black.opponent = white
+        white.opponent = black
+        send(black, {"type": "matched", "color": "black"})
+        send(white, {"type": "matched", "color": "white"})
+```
+
+匹配采用**先到先配对**（FIFO）策略。当前无配对算法或 ELO 评级——适合项目初期，未来可扩展。
+
+#### 14.4.4 服务端着法验证
+
+服务器维护一个纯 Python 的 `PureBoard` 类（~60 行），用于：
+
+1. **验证回合**：只有轮到该玩家时才能落子
+2. **验证空位**：不能落在已有棋子的位置
+3. **检测五连**：从最后落子向四个方向扫描，连五即胜
+4. **检测棋盘满**：225 手无五连则平局
+
+```python
+DIRS = [(0,1), (1,0), (1,1), (1,-1)]  # 四个方向
+
+def check_winner(r, c):
+    color = grid[r][c]
+    for dr, dc in DIRS:
+        count = 1
+        for sign in (1, -1):        # 每个方向检查正反两侧
+            for step in range(1, 5):
+                nr, nc = r + sign*step*dr, c + sign*step*dc
+                if in_bounds(nr, nc) and grid[nr][nc] == color:
+                    count += 1
+                else:
+                    break
+        if count >= 5:
+            return color
+    return None  # 尚未五连
+```
+
+**为什么不复用 C++ 引擎**？C++ 扩展（`_gomoku_core.pyd`）是 Windows 专有格式，无法在 CentOS 服务器上加载。60 行的纯 Python 棋盘足以满足验证需求。
+
+#### 14.4.5 心跳与断线检测
+
+```python
+HEARTBEAT_TIMEOUT = 90  # 秒
+
+# 服务器端：每秒检查一次
+def check_heartbeats():
+    now = time.time()
+    for player in connections:
+        if now - player.last_beat > HEARTBEAT_TIMEOUT:
+            disconnect(player)  # 判对手获胜
+
+# 客户端：每 30 秒发送一次
+def start_heartbeat():
+    send({"type": "ping"})
+    root.after(30000, start_heartbeat)  # tkinter 定时器
+```
+
+### 14.5 客户端设计
+
+#### 14.5.1 双线程模型
+
+客户端采用经典的生产者-消费者模式：
+
+```
+┌─ 网络线程 (daemon) ─┐      queue.Queue      ┌─ 主线程 (tkinter) ─┐
+│                       │                       │                     │
+│  socket.recv() 阻塞   │ ── JSON 消息 ──────► │  root.after(100ms)  │
+│  解析 JSON            │                       │  _poll_messages()   │
+│  放入队列             │                       │  处理消息/更新 UI   │
+└───────────────────────┘                       └─────────────────────┘
+```
+
+**为什么不用异步**？tkinter 有自己的事件循环（`mainloop()`），与 `asyncio` 的事件循环不兼容。双线程方案实现简单，且网络线程几乎全部时间阻塞在 `recv()` 上，CPU 开销为零。
+
+#### 14.5.2 消息轮询
+
+```python
+def _poll_messages(self):
+    try:
+        while True:
+            msg = self._msg_queue.get_nowait()  # 非阻塞取消息
+            if msg is None:                     # None = 断线标记
+                self._handle_disconnect()
+                return
+            self._handle_message(msg)
+    except queue.Empty:
+        pass
+    if self._connected:
+        self._root.after(100, self._poll_messages)  # 100ms 后再次检查
+```
+
+`root.after(100, ...)` 是 tkinter 的定时器机制——它在主线程中调度，保证 UI 更新线程安全。
+
+#### 14.5.3 子进程架构
+
+线上对战客户端是**独立进程**，由主程序通过 `subprocess.Popen` 启动：
+
+```python
+# 主程序 app.py 中
+def _start_online(self):
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    subprocess.Popen(
+        [sys.executable, "-m", "gomoku.client_online"],
+        cwd=project_root,
+    )
+```
+
+这样设计的好处：
+- **完全隔离**：客户端崩溃不影响主程序
+- **独立开发**：修改客户端无需动主程序代码
+- **独立运行**：客户端可直接运行，无需主程序
+
+### 14.6 消息分帧详解
+
+TCP 是**流式协议**——发送方写 3 次数据，接收方可能 1 次读完，也可能分 5 次读到。因此必须自行处理**消息边界**。
+
+本项目的方案是**换行符分隔**（newline-delimited）：
+
+```python
+# 发送端：序列化为一行 JSON + \n
+data = json.dumps({"type": "move", "row": 7, "col": 7}) + "\n"
+sock.sendall(data.encode("utf-8"))
+# 实际发送的字节: b'{"type":"move","row":7,"col":7}\n'
+
+# 接收端：按 \n 分割，处理粘包
+buf = b""
+while True:
+    buf += sock.recv(4096)
+    while b"\n" in buf:
+        line, buf = buf.split(b"\n", 1)   # 取出一行
+        msg = json.loads(line.decode())    # 解析 JSON
+        handle(msg)
+```
+
+**为什么不用固定长度头**？JSON 消息长度可变（几十字节到几百字节），固定长度头（如 4 字节表示长度）需要额外编解码，且丧失了"用 telnet 调试"的便利性。
+
+### 14.7 安全与边界情况
+
+| 场景 | 处理 |
+|------|------|
+| 对手回合强行落子 | 客户端本地拦截 + 服务端二次验证 |
+| 落在已有棋子上 | 服务端 PureBoard 拒绝，返回 error |
+| 恶意超长消息 | 服务端限制单条消息最大 4096 字节 |
+| 连接数超限 | 服务端限制最大 50 连接，超出拒绝并提示 |
+| 服务器宕机 | 客户端 socket 报错 → 显示"断开连接" → 可重连 |
+| 客户端窗口关闭 | `WM_DELETE_WINDOW` 协议 → 关闭 socket → 服务端检测 EOF |
+| 对手关闭窗口 | 服务端通知剩余玩家"对手断线，你获胜" |
+| 心跳超时（90秒无消息） | 服务端主动断开，通知对手获胜 |

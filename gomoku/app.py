@@ -5,38 +5,20 @@ Gomoku AI — tkinter GUI application with precise pixel-aligned board.
 import tkinter as tk
 from tkinter import messagebox, filedialog
 import threading
+import subprocess, sys, os
 import re, math
 from gomoku import (
     EMPTY, BLACK, WHITE, BOARD_SIZE,
     Board, Move, Game, SearchEngine, SearchConfig,
     GameResult, analyze_root,
 )
-
-# ── layout constants (all in pixels, fixed and precise) ────────
-CELL   = 38          # grid cell size
-LEFT   = 54          # left margin (room for row labels)
-TOP    = 74          # top margin (room for title + col labels)
-RADIUS = 16          # stone radius
-BOARD_PX = CELL * 14 # total grid span (532 px)
-
-# canvas size derived from layout
-CANVAS_W = LEFT + BOARD_PX + LEFT      # 54+532+54 = 640
-CANVAS_H = TOP  + BOARD_PX + (LEFT+16) # 74+532+70 = 676
-
-# intersection pixel position
-def ix(col): return LEFT + col * CELL
-def iy(row): return TOP  + row * CELL
-
-# ── colors ────────────────────────────────────────────────────
-BG         = "#DCB478"
-BOARD_BG   = "#D2A564"
-GRID       = "#3C2814"
-BLACK_FILL = "#141414"
-WHITE_FILL = "#EBEBEB"
-WHITE_OUT  = "#1E1E1E"
-STATUS_BG  = "#B48C50"
-TEXT_CLR   = "#281400"
-LAST_RED   = "#DC3232"
+from gomoku.board_ui import (
+    CELL, LEFT, TOP, RADIUS, BOARD_PX, CANVAS_W, CANVAS_H,
+    ix, iy, to_board,
+    BG, BOARD_BG, GRID, BLACK_FILL, WHITE_FILL, WHITE_OUT,
+    STATUS_BG, TEXT_CLR, LAST_RED,
+    draw_stone, draw_board_background, draw_stones_on_board,
+)
 
 
 class GomokuApp:
@@ -66,7 +48,7 @@ class GomokuApp:
     # ── UI ────────────────────────────────────────────────────
     def _build_ui(self):
         self._root = tk.Tk()
-        self._root.title("五子棋 AI — Alpha-Beta")
+        self._root.title("五子棋 AI v2.0 — Alpha-Beta")
         self._root.resizable(False, False)
 
         # menubar
@@ -100,6 +82,9 @@ class GomokuApp:
                            value="pvp", command=self._switch_mode)
         mm.add_radiobutton(label="棋谱分析", variable=self._mode_var,
                            value="analysis", command=self._switch_mode)
+        mm.add_separator()
+        mm.add_radiobutton(label="线上对战", variable=self._mode_var,
+                           value="online", command=self._switch_mode)
         mb.add_cascade(label="模式", menu=mm)
 
         sm = tk.Menu(mb, tearoff=0)
@@ -127,64 +112,21 @@ class GomokuApp:
                  bg=STATUS_BG, fg=TEXT_CLR, font=("Microsoft YaHei", 12),
                  anchor="center", height=2).pack(side=tk.BOTTOM, fill=tk.X)
 
-    # ── coordinate conversion ─────────────────────────────────
-    def _to_board(self, mx, my):
-        """canvas pixel → (row, col), or (-1,-1) if too far from intersection."""
-        col = int(round((mx - LEFT) / CELL))
-        row = int(round((my - TOP)  / CELL))
-        if not (0 <= col < BOARD_SIZE and 0 <= row < BOARD_SIZE):
-            return -1, -1
-        dx = mx - ix(col)
-        dy = my - iy(row)
-        if dx*dx + dy*dy > RADIUS*RADIUS:
-            return -1, -1
-        return row, col
-
     # ── drawing ───────────────────────────────────────────────
     def _draw(self):
         c = self._canvas
         c.delete("all")
 
-        # board background
-        margin = 24
-        c.create_rectangle(
-            ix(0) - margin, iy(0) - margin,
-            ix(14) + margin, iy(14) + margin,
-            fill=BOARD_BG, outline="")
-
-        # grid lines
-        for i in range(BOARD_SIZE):
-            c.create_line(ix(i), iy(0), ix(i), iy(14), fill=GRID, width=1)
-            c.create_line(ix(0), iy(i), ix(14), iy(i), fill=GRID, width=1)
-
-        # star points
-        stars = [(3,3),(3,7),(3,11),(7,3),(7,7),(7,11),(11,3),(11,7),(11,11)]
-        for sr, sc in stars:
-            x, y = ix(sc), iy(sr)
-            c.create_oval(x-3, y-3, x+4, y+4, fill=GRID, outline="")
-
-        # row/col labels
-        fsize = 10
-        for i in range(BOARD_SIZE):
-            lb = str(i) if i < 10 else chr(ord('A') + i - 10)
-            c.create_text(ix(i), iy(0) - CELL//2 - 4, text=lb,
-                          fill=TEXT_CLR, font=("Consolas", fsize))
-            c.create_text(ix(i), iy(14) + CELL//2 + 4, text=lb,
-                          fill=TEXT_CLR, font=("Consolas", fsize))
-            c.create_text(ix(0) - CELL//2 - 8, iy(i), text=lb,
-                          fill=TEXT_CLR, font=("Consolas", fsize))
-            c.create_text(ix(14) + CELL//2 + 8, iy(i), text=lb,
-                          fill=TEXT_CLR, font=("Consolas", fsize))
+        # board background, grid, star points, labels, title
+        mode_names = {"pve": "人机对战", "pvp": "本地对战", "analysis": "棋谱分析"}
+        self._root.title(f"五子棋 AI — {mode_names.get(self._mode, self._mode)}")
+        title_text = f"五子棋 AI v2.0 — {mode_names.get(self._mode, '')}"
+        draw_board_background(c, title_text)
 
         # stones
         board = self._game.getBoard()
-        for r in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
-                stone = board.get(r, col)
-                if stone != EMPTY:
-                    is_last = (self._last_ai_move.row == r and
-                               self._last_ai_move.col == col)
-                    self._draw_stone(stone, is_last, ix(col), iy(r))
+        draw_stones_on_board(c, lambda r, c: board.get(r, c),
+                             self._last_ai_move.row, self._last_ai_move.col)
 
         # hover preview
         hr, hc = self._hover
@@ -227,14 +169,6 @@ class GomokuApp:
                 c.create_text(bpx, bpy - RADIUS - 12, text="★",
                               fill="#CC0000", font=("", 14, "bold"))
 
-        # title
-        mode_names = {"pve": "人机对战", "pvp": "本地对战", "analysis": "棋谱分析"}
-        self._root.title(f"五子棋 AI — {mode_names.get(self._mode, self._mode)}")
-        title_text = f"五子棋 AI — {mode_names.get(self._mode, '')}"
-        c.create_text(CANVAS_W//2, 22,
-                      text=title_text, fill=TEXT_CLR,
-                      font=("Microsoft YaHei", 13, "bold"))
-
         # ── analysis progress bar ───────────────────────────────
         if self._mode == "analysis":
             wr_cur = self._score_to_winrate(self._ana_score)
@@ -273,19 +207,6 @@ class GomokuApp:
                           text=f"{black_wr:.0f}% : {white_wr:.0f}%",
                           fill="#FFFFFF" if 25 < black_wr < 75 else TEXT_CLR,
                           font=("Consolas", fsize2, "bold"))
-
-    def _draw_stone(self, color, is_last, px, py):
-        r = RADIUS
-        if color == BLACK:
-            self._canvas.create_oval(px-r, py-r, px+r, py+r,
-                                     fill=BLACK_FILL, outline="#0A0A0A", width=1)
-        else:
-            self._canvas.create_oval(px-r, py-r, px+r, py+r,
-                                     fill=WHITE_FILL, outline=WHITE_OUT, width=2)
-        if is_last:
-            d = 4
-            self._canvas.create_oval(px-d, py-d, px+d, py+d,
-                                     fill=LAST_RED, outline="")
 
     # ── helpers ───────────────────────────────────────────────
     def _is_my_turn(self):
@@ -350,10 +271,32 @@ class GomokuApp:
         if self._ai_busy:
             self._game.engine().stop()
             self._ai_busy = False
-        self._mode = self._mode_var.get()
+        new_mode = self._mode_var.get()
+        if new_mode == "online":
+            self._mode_var.set(self._mode)  # revert radio button
+            self._start_online()
+            return
+        self._mode = new_mode
         if self._mode in ("pvp", "analysis"):
             self._game.aiIsBlack = True
         self._new_game()
+
+    def _start_online(self):
+        """Launch the online battle client as a subprocess."""
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        try:
+            env = os.environ.copy()
+            env["GOMOKU_ONLINE"] = "1"
+            if getattr(sys, 'frozen', False):
+                # PyInstaller bundle: use env var (more reliable than argv)
+                subprocess.Popen([sys.executable], env=env)
+            else:
+                subprocess.Popen(
+                    [sys.executable, "-m", "gomoku.client_online"],
+                    cwd=project_root,
+                )
+        except Exception as e:
+            messagebox.showerror("启动失败", f"无法启动客户端:\n{e}")
 
     def _switch_side(self):
         if self._ai_busy or self._mode == "pvp":
@@ -588,7 +531,7 @@ class GomokuApp:
 
     # ── input ─────────────────────────────────────────────────
     def _on_click(self, event):
-        r, c = self._to_board(event.x, event.y)
+        r, c = to_board(event.x, event.y)
         if r < 0: return
 
         # ── analysis mode: free stone placement ─────────────
@@ -635,7 +578,7 @@ class GomokuApp:
             self._draw()
 
     def _on_move(self, event):
-        r, c = self._to_board(event.x, event.y)
+        r, c = to_board(event.x, event.y)
         if r != self._hover[0] or c != self._hover[1]:
             self._hover = (r, c)
             self._draw()

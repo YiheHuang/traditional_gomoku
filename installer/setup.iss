@@ -1,5 +1,5 @@
 #define MyAppName "五子棋 AI"
-#define MyAppVersion "1.1"
+#define MyAppVersion "2.0"
 #define MyAppPublisher "Gomoku AI"
 #define MyAppExeName "GomokuAI.exe"
 
@@ -12,7 +12,7 @@ DefaultDirName={autopf}\GomokuAI
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=..\installer
-OutputBaseFilename=GomokuAI-Setup-1.1
+OutputBaseFilename=GomokuAI-Setup-2.0
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern

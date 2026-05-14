@@ -6,7 +6,8 @@
 
 - **高性能 Alpha-Beta 搜索**：PVS 空窗搜索 + 迭代加深 + 置换表 + 杀手/历史启发
 - **15×15 标准棋盘**：经典五子棋规则
-- **三种模式**：人机对战、本地双人对弈、棋谱分析
+- **四种模式**：人机对战、本地双人对弈、棋谱分析、线上对战
+- **线上对战**：通过中转服务器匹配对手，远程实时对弈
 - **SGF 棋谱**：导入/导出标准 Smart Game Format
 - **棋谱分析**：← → 键浏览，实时胜率热力图
 - **tkinter 图形界面**：原生 Python GUI，支持鼠标落子、悬停预览
@@ -27,7 +28,10 @@
 │   └── bindings.cpp        #   pybind11 Python 绑定
 ├── gomoku/                 # Python 应用层
 │   ├── __init__.py         #   自动加载 C++ 扩展
-│   └── app.py              #   tkinter 图形界面
+│   ├── app.py              #   tkinter 主程序图形界面
+│   ├── board_ui.py         #   共享棋盘绘制模块
+│   ├── client_online.py    #   线上对战客户端（独立窗口）
+│   └── server.py           #   中转匹配服务器（部署到 CentOS）
 ├── main.py                 # 程序入口
 ├── build_extension.py      # 一键编译脚本
 ├── CMakeLists.txt          # C++ 构建配置
@@ -80,6 +84,44 @@ cmake --build build --config Release
 
 - 「游戏」→「选择阵营」→ 切换先手/后手
 - 「设置」→ 调节 AI 思考时间（1/3/5/10 秒）
+
+### 线上对战
+
+「模式」→「线上对战」，启动独立客户端窗口。
+
+客户端通过 TCP 连接到中转服务器（默认 `192.144.228.237:9999`），服务器负责：
+- **匹配对手**：将等待中的两名玩家配对
+- **转发棋步**：将一方着法实时转发给另一方
+- **胜负判定**：服务端验证五连、棋盘满、认输、断线等终局条件
+
+客户端可独立运行，无需主程序：
+```bash
+python -m gomoku.client_online --host <服务器IP> --port 9999
+```
+
+### 部署中转服务器
+
+服务器为纯 Python 实现，无第三方依赖，部署到 CentOS：
+
+```bash
+# 上传服务器文件
+scp gomoku/server.py root@<服务器IP>:/opt/gomoku_server/
+
+# SSH 登录服务器
+ssh root@<服务器IP>
+
+# 开放防火墙端口
+firewall-cmd --zone=public --add-port=9999/tcp --permanent
+firewall-cmd --reload
+
+# 安装 systemd 服务（开机自启）
+cp installer/gomoku-server.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now gomoku-server
+
+# 查看运行状态
+systemctl status gomoku-server
+```
 
 ### 本地对战
 
@@ -136,15 +178,16 @@ cmake --build build --config Release
 # 2. 复制 .pyd 到包目录
 cp build/_gomoku_core*.pyd gomoku/
 
-# 3. PyInstaller 打包为独立 exe
-pyinstaller --onefile --windowed --name GomokuAI --icon src/icon.ico \
-    --add-binary "gomoku/_gomoku_core*.pyd;." main.py
+# 3. PyInstaller 打包为独立 exe（使用 spec 文件，已含隐藏导入配置）
+pyinstaller GomokuAI.spec
 # → dist/GomokuAI.exe  (~11 MB)
 
 # 4. Inno Setup 生成安装包
 "C:/InnoSetup/ISCC.exe" installer/setup.iss
-# → installer/GomokuAI-Setup-1.1.exe  (~12 MB)
+# → installer/GomokuAI-Setup-2.0.exe  (~12 MB)
 ```
+
+> **v1.2 更新**：线上对战客户端（`client_online.py`）已内嵌至 exe。点击"线上对战"时，exe 以 `--online` 参数启动自身来运行客户端窗口。
 
 ### 安装包特性
 
@@ -154,6 +197,7 @@ pyinstaller --onefile --windowed --name GomokuAI --icon src/icon.ico \
 - 控制面板 → 添加/删除程序中可卸载
 - Windows 7+ 版本检测
 - 单文件 exe，自包含 Python 运行时和 C++ 引擎，无需额外安装
+- **线上对战**：点击菜单即启动独立客户端窗口，无需额外安装
 
 ## 技术参数
 

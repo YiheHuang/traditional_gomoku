@@ -26,10 +26,6 @@ for _d in _search_dirs:
 try:
     from _gomoku_core import *  # noqa: F401, F403
 except ImportError:
-    raise ImportError(
-        "Cannot import _gomoku_core. Please build the C++ extension first:\n"
-        "  cmake -B build -G 'MinGW Makefiles' -DCMAKE_BUILD_TYPE=Release "
-        "-Dpybind11_DIR=<path>\n"
-        "  cmake --build build --config Release\n"
-        "Then copy the .pyd to the gomoku/ directory."
-    )
+    # C++ extension not available (wrong Python version, not built, etc.).
+    # Pure-Python submodules (board_ui, client_online, server) still work.
+    pass

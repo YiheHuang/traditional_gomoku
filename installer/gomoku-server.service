@@ -1,0 +1,19 @@
+[Unit]
+Description=Gomoku Online Match Server
+After=network.target
+
+[Service]
+Type=simple
+User=nobody
+WorkingDirectory=/opt/gomoku_server
+ExecStart=/usr/bin/python3 /opt/gomoku_server/server.py --host 0.0.0.0 --port 9999
+Restart=always
+RestartSec=5
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/gomoku_server
+
+[Install]
+WantedBy=multi-user.target
